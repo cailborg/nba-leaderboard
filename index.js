@@ -1,35 +1,76 @@
 const { teams } = require("./teams");
-// var data = require("./data.json");
 var fs = require("fs");
-
 var json = JSON.parse(fs.readFileSync("./data.json", "utf8"));
-// console.log("json", json);
+
 // Store scores for each team here
-const scores = {};
+const scores = [];
 
 // Loop over each team and check whether a player in data.json matches and assign to that team
 for (var team in teams) {
   let result = teams[team];
   let values = Object.values(result);
-  let store = { teamName: team, players: {} };
-  var i = 0;
+  let store = [];
+
   for (const val of values) {
-    i++;
     let match = json.filter(x => x.playerName === val);
 
     //Add up the points
-    let sum = match[0];
-    console.log("points", sum);
+    let playerValues = { ...match[0] };
+    let sum =
+      playerValues.points * 1 +
+      playerValues.rebounds * 1.5 +
+      playerValues.assists * 1.5 +
+      playerValues.steals * 2 +
+      playerValues.blocks * 2 -
+      playerValues.turnovers * 2;
 
-    //Assign the matching result to the team object
-    Object.assign(store.players, { [i]: match });
+    function isNumber(val) {
+      if (isNaN(val) === true) {
+        return 0;
+      } else {
+        return val;
+      }
+    }
+    let number = isNumber(sum);
+
+    // Determine whether player is back or front court
+
+    function courtFinder(position) {
+      if (position === "SG" || position === "PG") {
+        return "Back";
+      } else {
+        return "Front";
+      }
+    }
+    let courtPosition = courtFinder(playerValues.position);
+
+    // create the player array and push it into the team array
+
+    let data = [
+      playerValues.playerName,
+      playerValues.position,
+      courtPosition,
+      number
+    ];
+    // console.log("data", data);
+
+    store.push(data);
   }
-  // console.log(store.teamName, store.players);
 
-  //Assign the team + players to the scores object
-  let test = { [store.teamName]: store.players };
-  Object.assign(scores, test);
+  // console.log("store", store);
+
+  //Sort the results by court position and score
+  function cmp(x, y) {
+    return x > y ? 1 : x < y ? -1 : 0;
+  }
+
+  store.sort(function(a, b) {
+    return cmp(a[2], b[2]) || cmp(b[3], a[3]);
+  });
+
+  // Push results to the store
+  scores.push(team, store);
 }
 
 // Do something with scores
-// console.log("scores", scores);
+console.log("scores", scores);
