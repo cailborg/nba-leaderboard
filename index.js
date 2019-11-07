@@ -9,7 +9,8 @@ const scores = [];
 for (var team in teams) {
   let result = teams[team];
   let values = Object.values(result);
-  let store = [];
+  let front = [];
+  let back = [];
 
   for (const val of values) {
     let match = json.filter(x => x.playerName === val);
@@ -35,14 +36,21 @@ for (var team in teams) {
 
     // Determine whether player is back or front court
 
-    function courtFinder(position) {
-      if (position === "SG" || position === "PG") {
+    function courtFinder(position, playerName) {
+      if (playerName === "Jaylen Brown") {
+        return "Front";
+      } else if (playerName === "Justise Winslow") {
+        return "Back";
+      } else if (position === "SG" || position === "PG") {
         return "Back";
       } else {
         return "Front";
       }
     }
-    let courtPosition = courtFinder(playerValues.position);
+    let courtPosition = courtFinder(
+      playerValues.position,
+      playerValues.playerName
+    );
 
     // create the player array and push it into the team array
 
@@ -52,25 +60,52 @@ for (var team in teams) {
       courtPosition,
       number
     ];
-    // console.log("data", data);
 
-    store.push(data);
+    if (data[2] === "Front") {
+      front.push(data);
+    } else {
+      back.push(data);
+    }
   }
-
-  // console.log("store", store);
 
   //Sort the results by court position and score
-  function cmp(x, y) {
-    return x > y ? 1 : x < y ? -1 : 0;
-  }
 
-  store.sort(function(a, b) {
-    return cmp(a[2], b[2]) || cmp(b[3], a[3]);
-  });
+  front.sort((a, b) => b[3] - a[3]);
+  back.sort((a, b) => b[3] - a[3]);
 
-  // Push results to the store
-  scores.push(team, store);
+  console.log("sorted front " + team, front);
+  console.log("sorted back " + team, back);
+
+  // Slice off the top 3 front court and top 2 back court players
+  let slicedFront = front.slice(0, 3);
+  let slicedBack = back.slice(0, 2);
+
+  // Add up the scores
+  let sumFront = slicedFront.reduce(
+    (accumulator, currentValue) => accumulator + currentValue[3],
+    0
+  );
+  let sumBack = slicedBack.reduce(
+    (accumulator, currentValue) => accumulator + currentValue[3],
+    0
+  );
+
+  var teamPlayersFront = slicedFront.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue[0]),
+    []
+  );
+
+  var teamPlayersBack = slicedBack.reduce(
+    (accumulator, currentValue) => accumulator.concat(currentValue[0]),
+    []
+  );
+
+  let total = sumBack + sumFront;
+
+  // push results to the store
+  scores.push([team, total, teamPlayersFront, teamPlayersBack]);
 }
 
 // Do something with scores
+scores.sort((a, b) => b[1] - a[1]);
 console.log("scores", scores);
